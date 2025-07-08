@@ -14,7 +14,7 @@ class Plugin extends \MapasCulturais\Plugin {
         $app = App::i();
 
         $app->hook('template(<<*>>.<<*>>.registration-list-actions-entity-table):end', function($args) {
-            $this->part('download-files');
+            $this->part('download/download-files');
             // $this->part('download/download-files', [
             //     'entity' => $this->controller->requestedEntity
             // ]);
