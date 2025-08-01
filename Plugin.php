@@ -13,13 +13,15 @@ class Plugin extends \MapasCulturais\Plugin {
     public function _init() {
         $app = App::i();
 
-        $app->hook('template(<<*>>.<<*>>.registration-list-actions-entity-table):end', function($args) {
-            $this->part('download/download-files');
-            // $this->part('download/download-files', [
-            //     'entity' => $this->controller->requestedEntity
-            // ]);
+        $app->hook('template(<<*>>.<<*>>.registration-list-actions-entity-table):end', function($entity) {
+            $this->part('download/download-files', [
+                'entity' => $entity
+            ]);
         });
     }
 
-    public function register() { }
+    public function register() {
+        $app = App::i();
+        $app->registerController('download-registration', Controller::class);
+    }
 }

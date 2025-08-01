@@ -8,5 +8,5 @@ use MapasCulturais\i;
 ?>
 
 <div>
-    <button class="button button--primary" @click="downloadAll()"><?= i::__('Baixar todos anexos') ?></button>
+    <button class="button button--primary" @click="downloadAll"><?= i::__('Baixar todos anexos') ?></button>
 </div>
