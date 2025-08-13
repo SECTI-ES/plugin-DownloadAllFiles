@@ -15,6 +15,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
     public function GET_createAllZipFiles() {
         $app = App::i();
         $this->requireAuthentication();
+        $phases = [];
 
         $opportunityId = $this->data['opportunityId'] ?? null;
         if (!$opportunityId)
@@ -24,8 +25,17 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         if (!$opportunity)
             $this->errorJson("Fase não encontrada", 404);
 
+        if (!$opportunity->parent) {
+            $phases = $app->repo("Opportunity")->findBy(['parent' => $opportunity->id]);
+        } else {
+            $opportunity = $app->repo("Opportunity")->findOneBy(['id' => $opportunity->parent->id]);
+            if (!$opportunity)
+                $this->errorJson("Fase não encontrada", 404);
+
+            $phases = $app->repo("Opportunity")->findBy(['parent' => $opportunity->id]);
+        }
+
         $opportunity->checkPermission('@control');
-        $registrations = $app->repo('Registration')->findBy(['opportunity' => $opportunity]) ?? [];
 
         $zip = new \ZipArchive();
         $fileName = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $opportunity->id . '-' . $opportunity->name) . '.zip';
@@ -34,15 +44,19 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         if ($zip->open($tmpZipPath, \ZipArchive::CREATE) !== true)
             $this->errorJson("Erro ao criar o ZIP", 500);
 
-        foreach ($registrations as $registration) {
-            if (!$registration->files) continue;
+        foreach([$opportunity, ...$phases] as $phase) {
+            $registrations = $app->repo('Registration')->findBy(['opportunity' => $phase]) ?? [];
 
-            foreach ($registration->files as $key => $file) {
-                if (is_array($file)) $file = $file[0];
-                if (!$file || !file_exists($file->path)) continue;
+            foreach ($registrations as $registration) {
+                if (!$registration->files) continue;
 
-                $pathInZip = $registration->number . '/' . basename($file->path);
-                $zip->addFile($file->path, $pathInZip);
+                foreach ($registration->files as $key => $file) {
+                    if (is_array($file)) $file = $file[0];
+                    if (!$file || !file_exists($file->path)) continue;
+
+                    $pathInZip = $phase->name . '/' . $registration->number . '/' . basename($file->path);
+                    $zip->addFile($file->path, $pathInZip);
+                }
             }
         }
 
