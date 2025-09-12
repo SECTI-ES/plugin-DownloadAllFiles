@@ -54,7 +54,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
                     if (is_array($file)) $file = $file[0];
                     if (!$file || !file_exists($file->path)) continue;
 
-                    $pathInZip = $phase->name . '/' . $registration->number . '/' . basename($file->path);
+                    $pathInZip = $registration->number . '/' . $phase->name . '/' . basename($file->path);
                     $zip->addFile($file->path, $pathInZip);
                 }
             }
