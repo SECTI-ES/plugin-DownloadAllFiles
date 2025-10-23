@@ -1,8 +1,12 @@
+<?php
+use MapasCulturais\i;
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Ficha de Inscrição</title>
+    <title><?= i::__("Ficha de Inscrição") ?></title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
         h1, h2 { text-align: center; }
@@ -12,38 +16,38 @@
     </style>
 </head>
 <body>
-    <h1>Ficha de Inscrição</h1>
+    <h1><?= i::__("Ficha de Inscrição") ?></h1>
     <h2><a href="<?= htmlspecialchars($registration->opportunity->singleUrl ?? '#') ?>"><?= htmlspecialchars($registration->opportunity->id) . htmlspecialchars($registration->opportunity->name ? ' - ' . $registration->opportunity->name : '') ?></a></h2>
 
-    <h3>Dados do Inscrito</h3>
+    <h3><?= i::__("Dados do Inscrito") ?></h3>
 
     <table>
-        <tr><th>Número da inscrição</th><td><a href="<?= htmlspecialchars($registration->singleUrl ?? '#') ?>"><?= htmlspecialchars($registration->id) ?></a></td></tr>
-        <tr><th>Nome</th><td><a href="<?= htmlspecialchars($singleUrlOwner ?? '#') ?>"><?= htmlspecialchars($nameOwner ?? '') ?></a></td></tr>
+        <tr><th><?= i::__("Número da inscrição") ?></th><td><a href="<?= htmlspecialchars($registration->singleUrl ?? '#') ?>"><?= htmlspecialchars($registration->id) ?></a></td></tr>
+        <tr><th><?= i::__("Nome") ?></th><td><a href="<?= htmlspecialchars($singleUrlOwner ?? '#') ?>"><?= htmlspecialchars($nameOwner ?? '') ?></a></td></tr>
 
         <?php if (!empty($registration->proponentType)): ?>
-        <tr><th>Tipo de Proponente</th><td><?= htmlspecialchars($registration->proponentType) ?></td></tr>
+        <tr><th><?= i::__("Tipo de Proponente") ?></th><td><?= htmlspecialchars($registration->proponentType) ?></td></tr>
         <?php endif; ?>
 
         <?php if (!empty($registration->projectName)): ?>
-        <tr><th>Nome do Projeto</th><td><?= htmlspecialchars($registration->projectName) ?></td></tr>
+        <tr><th><?= i::__("Nome do Projeto") ?></th><td><?= htmlspecialchars($registration->projectName) ?></td></tr>
         <?php endif; ?>
 
         <?php if (!empty($registration->category)): ?>
-        <tr><th>Categoria</th><td><?= htmlspecialchars($registration->category) ?></td></tr>
+        <tr><th><?= i::__("Categoria") ?></th><td><?= htmlspecialchars($registration->category) ?></td></tr>
         <?php endif; ?>
 
-        <tr><th>Status</th><td><?= htmlspecialchars($registration->status) ?></td></tr>
-        <tr><th>Data de inscrição</th><td><?= $registration->createTimestamp ? $registration->createTimestamp->format('Y-m-d H:i:s') : '' ?></td></tr>
+        <tr><th><?= i::__("Data de inscrição") ?></th><td><?= $registration->createTimestamp ? $registration->createTimestamp->format('Y-m-d H:i:s') : '' ?></td></tr>
     </table>
 
-    <h3>Respostas dos Formulários</h3>
+    <h3><?= i::__("Respostas dos Formulários por Fase") ?></h3>
 
     <?php foreach ($answers as $formId => $form): ?>
         <?php if (isset($form['answers']) && !empty($form['answers'])): ?>
-            <h4><?= htmlspecialchars($form['name'] ?? '') ?></h4>
+            <h4><?= htmlspecialchars($form['name'] ?? ($formId ?? "")) ?></h4>
+            <h5><?= i::__("Status") ?>: <?= $form['status'] ?></h5>
             <table>
-                <tr><th>Campo</th><th>Resposta</th></tr>
+                <tr><th><?= i::__("Campo") ?></th><th><?= i::__("Resposta") ?></th></tr>
                 <?php foreach ($form['answers'] as $key => $value): ?>
                     <tr>
                         <td><?= htmlspecialchars($key) ?></td>

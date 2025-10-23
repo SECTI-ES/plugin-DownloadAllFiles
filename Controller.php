@@ -3,8 +3,8 @@ namespace DownloadAllFiles;
 
 require_once __DIR__ . '/vendor/autoload.php';
 use Dompdf\Dompdf;
+use MapasCulturais\i;
 use MapasCulturais\App;
-
 
 class Controller extends \MapasCulturais\Controllers\EntityController {
 
@@ -14,6 +14,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         $this->entityClassName = '\DownloadAllFiles\download-registration';
 
     }
+
     /**
      * Exporta todas as inscrições e seus anexos em um arquivo ZIP
      * Inclui a ficha de inscrição (ficha.pdf) dentro de cada pasta
@@ -22,27 +23,21 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
     {
         $app = App::i();
         $this->requireAuthentication();
-        $phases = [];
 
         $opportunityId = $this->data['opportunityId'] ?? null;
         if (!$opportunityId) {
-            $this->errorJson("ID da oportunidade não enviado", 400);
+            $this->errorJson(i::__("ID da oportunidade não enviado"), 400);
         }
 
         $opportunity = $app->repo('Opportunity')->find(['id' => $opportunityId]);
         if (!$opportunity) {
-            $this->errorJson("Fase não encontrada", 404);
+            $this->errorJson(i::__("Fase não encontrada"), 404);
         }
-        // $opportunity->isFirstPhase;
-        // $phase->nextPhase;
-        if (!$opportunity->parent) {
-            $phases = $app->repo("Opportunity")->findBy(['parent' => $opportunity->id]);
-        } else {
+
+        if (!$opportunity->isFirstPhase) {
             $opportunity = $app->repo("Opportunity")->findOneBy(['id' => $opportunity->parent->id]);
             if (!$opportunity)
-                $this->errorJson("Fase não encontrada", 404);
-
-            $phases = $app->repo("Opportunity")->findBy(['parent' => $opportunity->id]);
+                $this->errorJson(i::__("Fase não encontrada"), 404);
         }
 
         $opportunity->checkPermission('@control');
@@ -52,14 +47,15 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         $zipName = preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $opportunity->id . '-' . $opportunity->name);
         $tmpZipPath = sys_get_temp_dir() . '/' . uniqid($zipName) . '.zip';
         if ($zip->open($tmpZipPath, \ZipArchive::CREATE) !== true) {
-            $this->errorJson("Erro ao criar o ZIP", 500);
+            $this->errorJson(i::__("Erro ao criar o ZIP"), 500);
         }
 
         // Copia os anexos e acumula as respostas
         $fields = [];
-        foreach([$opportunity, ...$phases] as $phase) {
-            $registrations = $app->repo('Registration')->findBy(['opportunity' => $phase]) ?? [];
-            // $registrations = $entity->getAllRegistrations();
+        $phase = $opportunity;
+        while(!!$phase) {
+            $registrations = $phase->getAllRegistrations();
+
             foreach ($registrations as $registration) {
 
                 if (!isset($fields[$registration->number])) // Usa-se o Number e não Id pois o Id muda conforme a fase
@@ -69,6 +65,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
                     $fields[$registration->number][$phase->id] = [];
 
                 $fields[$registration->number][$phase->id]["name"] = $phase->name;
+                $fields[$registration->number][$phase->id]["status"] = $registration->getEvaluationResultString() ?? i::__("Pendente");
                 $fields[$registration->number][$phase->id]["answers"] = $this->getAnswers($registration);
 
                 if (!$registration->files) continue;
@@ -77,10 +74,14 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
                     if (is_array($file)) $file = $file[0];
                     if (!$file || !file_exists($file->path)) continue;
 
-                    $pathInZip = $registration->number . '/' . $phase->name . '/' . basename($file->path);
+                    $parts = explode(' - ', $file->path, 3);
+                    $fileName = count($parts) >= 3 ? $parts[2] : $file->path;
+
+                    $pathInZip = $registration->number . '/'. i::__("anexos") . '-' . preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $phase->name) . '/' . $fileName;
                     $zip->addFile($file->path, $pathInZip);
                 }
             }
+            $phase = $phase->nextPhase;
         }
         // Diretório temporário para exportação
         $basePath = sys_get_temp_dir() . '/export_' . uniqid();
@@ -99,12 +100,12 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
 
         if (!file_exists($tmpZipPath)) {
             @unlink($tmpZipPath);
-            $this->errorJson("Nenhum anexo encontrado", 500);
+            $this->errorJson(i::__("Nenhum anexo encontrado"), 500);
         }
 
         // Cabeçalhos para forçar download
         header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . basename($zipName) . '"');
+        header('Content-Disposition: attachment; filename="' . basename($zipName) . '.zip"');
         header('Content-Length: ' . filesize($tmpZipPath));
         header('Pragma: public');
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
@@ -125,14 +126,29 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
 
         // Recupera campos da ficha usando getMetadata()
         $fieldsValues = method_exists($registration, 'getMetadata') ? $registration->getMetadata() : (isset($registration->metadata) ? $registration->metadata : []) ;
-        $fieldsConfigurations = $registration->opportunity->registrationFieldConfigurations;
+        $fieldsConfigurations = $registration->opportunity->getRegistrationFieldConfigurations();
+        $filesConfigurations = $registration->opportunity->getRegistrationFileConfigurations();
 
         $fields = [];
         foreach ($fieldsConfigurations as $conf) {
             $key = 'field_' . $conf->id;
             $label = $conf->title ?? $conf->fieldName ?? $key;
 
-            $fields[$label] = isset($fieldsValues[$key]) && $fieldsValues[$key] ? $fieldsValues[$key] : (isset($registration->$key) && $registration->$key ? $registration->$key : '');
+            $fields[$label] = isset($fieldsValues[$key]) && $fieldsValues[$key] ? $fieldsValues[$key] : (isset($registration->$key) && $registration->$key ? $registration->$key : ''); // Se retornar '' é pq nao tem o campo respondido
+        }
+
+        foreach ($filesConfigurations as $conf) {
+            $key = 'rfc_' . $conf->id;
+            $label = $conf->title ?? $conf->groupName ?? $key;
+            $path = "";
+
+            if (isset($registration->files[$key])){
+                $parts = explode(' - ', $registration->files[$key]->path, 3);
+                $fileName = count($parts) >= 3 ? $parts[2] : $registration->files[$key]->path;
+
+                $path = '/anexos-' . preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $registration->opportunity->name) . '/' . $fileName;
+            }
+            $fields[$label] = $path;
         }
         $app->enableAccessControl();
 
