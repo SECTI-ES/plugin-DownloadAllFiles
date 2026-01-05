@@ -68,9 +68,6 @@ date_default_timezone_set('America/Sao_Paulo');
                 color: var(--mc-black);
                 text-decoration: none;
             }
-            .header {
-                margin-bottom: 30px;
-            }
 
             .header h1 {
                 font-size: 33px;
@@ -88,7 +85,7 @@ date_default_timezone_set('America/Sao_Paulo');
 
             .register, .section {
                 width: 100%;
-                padding-bottom: 30px;
+                padding-bottom: 25px;
             }
 
             .register-header {
@@ -165,7 +162,9 @@ date_default_timezone_set('America/Sao_Paulo');
             .table-phases {
                 width: 100%;
                 overflow: hidden;
-                padding-bottom: 30px;
+                padding-top: 15px;
+                margin-top: 10px;
+                margin-bottom: 10px;
             }
 
             .table-phases-header {
@@ -257,6 +256,46 @@ date_default_timezone_set('America/Sao_Paulo');
                 font-size: 10px;
                 color: var(--mc-black);
             }
+
+            /* ===== CONTROLE DE QUEBRA DE PÁGINA (PDF) ===== */
+
+            /* Cada fase não quebra no meio */
+            .table-phases {
+                page-break-inside: avoid;
+            }
+
+            /* Cabeçalho da fase nunca fica separado */
+            .table-phases-header {
+                page-break-inside: avoid;
+            }
+
+            /* Moldura da tabela não quebra */
+            .table-border {
+                page-break-inside: avoid;
+            }
+
+            /* Tabela pode quebrar ENTRE linhas */
+            table {
+                page-break-inside: auto;
+                width: 100%;
+            }
+
+            /* Linhas nunca quebram no meio */
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            /* Cabeçalho da tabela repete automaticamente no PDF */
+            thead {
+                display: table-header-group;
+            }
+
+            /* Evita colapsos estranhos de borda no PDF */
+            .table-phases-body {
+                border-collapse: collapse;
+            }
+
         </style>
     </head>
     <body>
@@ -349,18 +388,21 @@ date_default_timezone_set('America/Sao_Paulo');
 
                                 <div class="table-border">
                                     <table class="table table-phases-body">
-                                        <tr class="table-header">
-                                            <th><?= i::__("Campo") ?></th>
-                                            <th><?= i::__("Resposta") ?></th>
-                                        </tr>
-
-                                        <?php foreach ($form['answers'] as $key => $value): ?>
-                                            <tr>
-                                                <td class="field"><?= htmlspecialchars($key) ?></td>
-                                                <td><?= htmlspecialchars(is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)) ?></td>
+                                        <thead>
+                                            <tr class="table-header">
+                                                <th><?= i::__("Campo") ?></th>
+                                                <th><?= i::__("Resposta") ?></th>
                                             </tr>
-                                        <?php endforeach; ?>
+                                        </thead>
 
+                                        <tbody>
+                                            <?php foreach ($form['answers'] as $key => $value): ?>
+                                                <tr>
+                                                    <td class="field"><?= htmlspecialchars($key) ?></td>
+                                                    <td><?= htmlspecialchars(is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)) ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
                                     </table>
                                 </div>
                             </div>
