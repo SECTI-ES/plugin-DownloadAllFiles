@@ -179,13 +179,13 @@ date_default_timezone_set('America/Sao_Paulo');
                 z-index: -2;
                 border-top-left-radius: 26px;
                 border-top-right-radius: 26px;
-                margin-bottom: -20px;
+                margin-bottom: -21px;
             }
 
             .status-box{
                 font-size: 14px;
                 font-weight: normal;
-                padding-top: 5px;
+                padding-top: 4px;
             }
 
             .table-phases-body th {
@@ -222,16 +222,15 @@ date_default_timezone_set('America/Sao_Paulo');
 
             .status-Suplente {
                 background: var(--mc-warning-500);
-                color: var(--mc-white);
+                color: var(--mc-gray-700);
             }
 
-            /* Não Selecionada */
-            .status-Não {
+            .status-Nao-Selecionada {
                 background: var(--mc-danger-500);
                 color: var(--mc-white);
             }
 
-            .status-Inválida {
+            .status-Invalida {
                 background: var(--mc-danger-500);
                 color: var(--mc-white);
             }
@@ -333,14 +332,14 @@ date_default_timezone_set('America/Sao_Paulo');
                                 <div class="table-phases-header">
                                     <table width="100%">
                                         <tr>
-                                            <td align="left" style="margin-top: 1%;">
+                                            <td align="left" style="padding-top: 3px;">
                                                 <?= htmlspecialchars($form['name'] ?? ($formId ?? "")) ?>
                                             </td>
                                             <td align="right">
                                                 <div class="status-box">
-                                                    Status da Avaliação:
-                                                    <span class="status status-<?= isset($form['status']) ? $form['status'] : (  isset($registration->status) ? $this->statusName($registration->status) : 'Rascunho' ) ?>">
-                                                        <?= isset($form['status']) ? $form['status'] : ( isset($registration->status) ? $this->statusName($registration->status) : 'Rascunho' ) ?>
+                                                    Status:
+                                                    <span class="status status-<?= isset($form['status']) ? $this->statusName($form['status'], true) : 'Rascunho' ?>">
+                                                        <?= isset($form['status']) ? $this->statusName($form['status']) : 'Rascunho' ?>
                                                     </span>
                                                 </div>
                                             </td>
