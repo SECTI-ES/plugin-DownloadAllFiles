@@ -3,7 +3,10 @@ namespace DownloadAllFiles;
 
 require_once __DIR__ . '/vendor/autoload.php';
 use Dompdf\Dompdf;
+use Dompdf\Options;
+
 use MapasCulturais\App;
+use Exception;
 
 
 class Controller extends \MapasCulturais\Controllers\EntityController {
@@ -140,6 +143,123 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
     }
 
     /**
+     * Resolve CSS variables (--var) para uso com Dompdf.
+     *
+     * Suporta:
+     * - :root { --x: valor; }
+     * - html { --x: valor; }
+     * - var(--x)
+     * - var(--x, fallback)
+     */
+    function resolveCssVariables(string $html): string
+    {
+        $variables = [];
+
+        // 1️⃣ Extrai TODOS os blocos <style>
+        if (preg_match_all('/<style[^>]*>(.*?)<\/style>/is', $html, $styles)) {
+            foreach ($styles[1] as $css) {
+
+                // 2️⃣ Captura todas as variáveis CSS (--x: valor;)
+                if (preg_match_all(
+                    '/(--[a-zA-Z0-9\-_]+)\s*:\s*([^;]+);/',
+                    $css,
+                    $defs,
+                    PREG_SET_ORDER
+                )) {
+                    foreach ($defs as $def) {
+                        $variables[$def[1]] = trim($def[2]);
+                    }
+                }
+            }
+        }
+
+        // Nenhuma variável encontrada → retorna original
+        if (empty($variables)) {
+            return $html;
+        }
+
+        // 3️⃣ Substitui var(--x) e var(--x, fallback)
+        $html = preg_replace_callback(
+            '/var\(\s*(--[a-zA-Z0-9\-_]+)\s*(?:,\s*([^)]+))?\)/',
+            function ($matches) use ($variables) {
+                $name = $matches[1];
+                $fallback = $matches[2] ?? '';
+
+                return $variables[$name] ?? $fallback;
+            },
+            $html
+        );
+
+        // 4️⃣ Remove apenas as definições --x: valor; (mantém o resto do CSS)
+        $html = preg_replace(
+            '/--[a-zA-Z0-9\-_]+\s*:\s*[^;]+;/',
+            '',
+            $html
+        );
+
+        return $html;
+    }
+
+    /**
+     * Filtra arquivos selecionados, pegando apenas o primeiro de cada grupo duplicado
+     * Padrão de arquivo: <nome>.<dist>.<id>.<extensão>
+     * Exemplo: main.prod.1.css, main.prod.2.css -> pega apenas main.prod.1.css
+     *
+     * @param array $selectedNames Array com nomes base desejados ['main', 'tables', 'forms']
+     * @param string $Folder Caminho da pasta com os arquivos
+     * @return array Array de caminhos dos arquivos filtrados
+     */
+    function filterAndSelectFiles($selectedNames, $folder, $extension = "*") {
+        $webFolder = "/assets/$folder/";
+        $fullFolder = $_SERVER['DOCUMENT_ROOT'] . $webFolder;
+
+        $result = [];
+
+        if (!is_dir($fullFolder) || empty($selectedNames)) {
+            return $result;
+        }
+
+        // Pega todos os arquivos da extensão especificada
+        $files = glob(rtrim($fullFolder, '/') . '/*.' . $extension);
+        sort($files, SORT_NATURAL);
+
+        // Cria um mapa de arquivos por nome base
+        $filesByName = [];
+        foreach ($files as $filePath) {
+            if (!is_file($filePath) || !is_readable($filePath)) continue;
+
+            $fileName = basename($filePath); // ex: main.prod.1.css
+
+            // Extrai o nome base (primeira parte antes do primeiro ponto)
+            $baseName = explode('.', $fileName)[0]; // ex: main
+
+            // Armazena apenas o primeiro arquivo de cada nome base
+            if (in_array($baseName, $selectedNames) && !isset($filesByName[$baseName])) {
+                $filesByName[$baseName] = $filePath;
+                $result[] = $filePath;
+            }
+        }
+
+        return $result;
+    }
+
+    function statusName($status) {
+        if($status === 10) {
+            return i::__('Selecionada');
+        } elseif($status === 8) {
+            return i::__('Suplente');
+        } elseif($status === 3) {
+            return i::__('Não selecionada');
+        } elseif($status === 2) {
+            return i::__('Inválida');
+        } elseif($status === 1) {
+            return i::__('Pendente');
+        } else {
+            return i::__('Rascunho');
+        }
+    }
+
+    /**
      * Gera o PDF da ficha de inscrição e salva em $folder/ficha.pdf
      */
     private function exportRegistrationToPdf($registration, $answers, $fileName)
@@ -153,14 +273,29 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         include __DIR__ . '/views/registration-ficha.php';
         $html = ob_get_clean();
 
-        // Converte em PDF usando Dompdf
-        $pdf = new Dompdf();
-        $pdf->loadHtml($html);
-        $pdf->setPaper('A4', 'portrait');
-        $pdf->render();
 
-        // Salva o PDF
-        file_put_contents($fileName, $pdf->output());
+        // Gera PDF
+        try {
+            $html = $this->resolveCssVariables($html);
+            // error_log("HTML gerado para PDF: \n" . $html);
+            // echo $html;
+            // exit;
+
+            // Converte em PDF usando Dompdf
+            $options = new Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('chroot', $_SERVER['DOCUMENT_ROOT']);
+
+            $pdf = new Dompdf($options);
+            $pdf->loadHtml($html);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->render();
+
+            file_put_contents($fileName, $pdf->output());
+        } catch (\Exception $e) {
+            error_log("Erro ao gerar PDF: " . $e->getMessage());
+            $this->errorJson("Erro ao gerar PDF: " . $e->getMessage(), 500);
+        }
     }
 
     /**
