@@ -275,6 +275,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
      */
     private function exportRegistrationToPdf($registration, $answers, $fileName)
     {
+        $app = App::i();
         // Variáveis para acessar no template
         $nameOwner = $registration->owner->name;
         $singleUrlOwner = $registration->owner->singleUrl;

@@ -5,10 +5,6 @@
  */
 
 use MapasCulturais\i;
-use MapasCulturais\app;
-
-$app = App::i();
-$theme = $app->view;
 
 date_default_timezone_set('America/Sao_Paulo');
 ?>
@@ -62,6 +58,7 @@ date_default_timezone_set('America/Sao_Paulo');
 
             body {
                 background-color: var(--mc-white);
+                padding-top: 40px;
             }
 
             a {
@@ -77,7 +74,7 @@ date_default_timezone_set('America/Sao_Paulo');
             }
 
             .header h2 {
-                margin: 10px 0 5px 0;
+                margin: 10px 0 10px 0;
                 font-size: 22px;
                 font-weight: normal;
                 opacity: 0.95;
@@ -101,6 +98,7 @@ date_default_timezone_set('America/Sao_Paulo');
                 border-top-left-radius: 26px;
                 border-top-right-radius: 26px;
                 margin-bottom: -47px;
+                margin-top: 10px;
                 height: 80px;
             }
 
@@ -112,6 +110,11 @@ date_default_timezone_set('America/Sao_Paulo');
             }
             .register-table, .table-phases-body {
                 border-collapse: collapse;
+                width: 100%;
+            }
+
+            .table-phases-body {
+                table-layout: fixed;
                 width: 100%;
             }
 
@@ -163,8 +166,7 @@ date_default_timezone_set('America/Sao_Paulo');
                 width: 100%;
                 overflow: hidden;
                 padding-top: 15px;
-                margin-top: 10px;
-                margin-bottom: 10px;
+                margin-bottom: 20px;
             }
 
             .table-phases-header {
@@ -173,12 +175,12 @@ date_default_timezone_set('America/Sao_Paulo');
                 font-size: 20px;
                 font-weight: bold;
                 padding: 2% 5% 0 7%;
-                height: 73px;
+                height: 80px;
 
                 z-index: -2;
                 border-top-left-radius: 26px;
                 border-top-right-radius: 26px;
-                margin-bottom: -21px;
+                margin-bottom: -28px;
             }
 
             .status-box{
@@ -199,9 +201,22 @@ date_default_timezone_set('America/Sao_Paulo');
                 background-color: var(--mc-white);
                 color: var(--mc-black);
                 padding: 13px;
+
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+                white-space: normal;
             }
 
-            .table-phases-body tr,
+            .table-phases-body th:first-child,
+            .table-phases-body td.field {
+                width: 30%;
+            }
+
+            .table-phases-body th:last-child,
+            .table-phases-body td:last-child {
+                width: 70%;
+            }
 
             .status {
                 padding: 10px;
@@ -245,7 +260,7 @@ date_default_timezone_set('America/Sao_Paulo');
             }
 
             .page-content {
-                margin: 80px;
+                margin: 30px 80px 20px 80px;
             }
 
             .footer-generated {
@@ -259,19 +274,10 @@ date_default_timezone_set('America/Sao_Paulo');
 
             /* ===== CONTROLE DE QUEBRA DE PÁGINA (PDF) ===== */
 
-            /* Cada fase não quebra no meio */
-            .table-phases {
-                page-break-inside: avoid;
-            }
-
             /* Cabeçalho da fase nunca fica separado */
             .table-phases-header {
                 page-break-inside: avoid;
-            }
-
-            /* Moldura da tabela não quebra */
-            .table-border {
-                page-break-inside: avoid;
+                page-break-after: avoid;
             }
 
             /* Tabela pode quebrar ENTRE linhas */
@@ -286,19 +292,18 @@ date_default_timezone_set('America/Sao_Paulo');
                 page-break-after: auto;
             }
 
-            /* Cabeçalho da tabela repete automaticamente no PDF */
             thead {
-                display: table-header-group;
+                display: table-row-group;
+                page-break-inside: avoid;
+                page-break-after: auto;
+                border-bottom: 2px solid var(--mc-black);
             }
-
-            /* Evita colapsos estranhos de borda no PDF */
-            .table-phases-body {
-                border-collapse: collapse;
-            }
-
         </style>
     </head>
     <body>
+        <div class="footer-generated">
+            Ficha Gerada em: <?= date('d/m/Y H:i:s') ?>
+        </div>
         <div class="page-content">
             <div class="header">
                 <table width="100%">
@@ -308,7 +313,7 @@ date_default_timezone_set('America/Sao_Paulo');
                             <h2><a href="<?= htmlspecialchars($registration->opportunity->singleUrl ?? '#') ?>"><?= htmlspecialchars($registration->opportunity->id) . htmlspecialchars($registration->opportunity->name ? ' - ' . $registration->opportunity->name : '') ?></a></h2>
                         </td>
                         <td class="logo" align="right">
-                                <img src="file://<?= $this->filterAndSelectFiles(["logo"], "icon", "png")[0]; ?>" alt="Logo not Found" style="width: 190px;">
+                            <img src="file://<?= $this->filterAndSelectFiles(["logo"], "icon", "png")[0]; ?>" alt="Logo not Found" style="width: 190px;">
                         </td>
                     </tr>
                 </table>
@@ -365,53 +370,50 @@ date_default_timezone_set('America/Sao_Paulo');
 
             <div class="section">
                 <div class="header"><h2><?= i::__("Respostas dos Formulários por Fase") ?></h2></div>
-                    <?php foreach ($answers as $formId => $form): ?>
-                        <?php if (isset($form['answers']) && !empty($form['answers'])): ?>
-                            <div class="table-phases">
-                                <div class="table-phases-header">
-                                    <table width="100%">
-                                        <tr>
-                                            <td align="left" style="padding-top: 3px;">
-                                                <?= htmlspecialchars($form['name'] ?? ($formId ?? "")) ?>
-                                            </td>
-                                            <td align="right">
-                                                <div class="status-box">
-                                                    Status:
-                                                    <span class="status status-<?= isset($form['status']) ? $this->statusName($form['status'], true) : 'Rascunho' ?>">
-                                                        <?= isset($form['status']) ? $this->statusName($form['status']) : 'Rascunho' ?>
-                                                    </span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-
-                                <div class="table-border">
-                                    <table class="table table-phases-body">
-                                        <thead>
-                                            <tr class="table-header">
-                                                <th><?= i::__("Campo") ?></th>
-                                                <th><?= i::__("Resposta") ?></th>
-                                            </tr>
-                                        </thead>
-
-                                        <tbody>
-                                            <?php foreach ($form['answers'] as $key => $value): ?>
-                                                <tr>
-                                                    <td class="field"><?= htmlspecialchars($key) ?></td>
-                                                    <td><?= htmlspecialchars(is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)) ?></td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
+                <?php foreach ($answers as $formId => $form): ?>
+                    <?php if (isset($form['answers']) && !empty($form['answers'])): ?>
+                        <div class="table-phases">
+                            <div class="table-phases-header">
+                                <table width="100%">
+                                    <tr>
+                                        <td align="left" style="padding-top: 3px;">
+                                            <?= htmlspecialchars($form['name'] ?? ($formId ?? "")) ?>
+                                        </td>
+                                        <td align="right">
+                                            <div class="status-box">
+                                                Status:
+                                                <span class="status status-<?= isset($form['status']) ? $this->statusName($form['status'], true) : 'Rascunho' ?>">
+                                                    <?= isset($form['status']) ? $this->statusName($form['status']) : 'Rascunho' ?>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
                             </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
+
+                            <div class="table-border">
+                                <table class="table table-phases-body">
+                                    <thead>
+                                        <tr class="table-header">
+                                            <th><?= i::__("Campo") ?></th>
+                                            <th><?= i::__("Resposta") ?></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <?php foreach ($form['answers'] as $key => $value): ?>
+                                            <tr>
+                                                <td class="field"><?= htmlspecialchars($key) ?></td>
+                                                <td><?= htmlspecialchars(is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
             </div>
-        <div class="footer-generated">
-            Ficha Gerada em: <?= date('d/m/Y H:i:s') ?>
         </div>
     </body>
 </html>
