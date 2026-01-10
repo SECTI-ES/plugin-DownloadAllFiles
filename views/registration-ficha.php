@@ -308,7 +308,7 @@ date_default_timezone_set('America/Sao_Paulo');
                             <h2><a href="<?= htmlspecialchars($registration->opportunity->singleUrl ?? '#') ?>"><?= htmlspecialchars($registration->opportunity->id) . htmlspecialchars($registration->opportunity->name ? ' - ' . $registration->opportunity->name : '') ?></a></h2>
                         </td>
                         <td class="logo" align="right">
-                                <img src="file://<?= $this->filterAndSelectFiles(["logo"], "img")[0]; ?>" alt="<?= $this->filterAndSelectFiles(["logo"], "img")[0]; ?>" style="width: 190px;">
+                                <img src="file://<?= $this->filterAndSelectFiles(["logo"], "icon", "png")[0]; ?>" alt="Logo not Found" style="width: 190px;">
                         </td>
                     </tr>
                 </table>

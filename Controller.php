@@ -225,33 +225,27 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
      * @return array Array de caminhos dos arquivos filtrados
      */
     function filterAndSelectFiles($selectedNames, $folder, $extension = "*") {
-        $webFolder = "/assets/$folder/";
-        $fullFolder = $_SERVER['DOCUMENT_ROOT'] . $webFolder;
+        $app = App::i();
+        $fullFolder = $app->view->getThemeFolder() . "/assets/$folder/";
 
         $result = [];
 
         if (!is_dir($fullFolder) || empty($selectedNames)) {
-            return $result;
+            return [""];
         }
 
         // Pega todos os arquivos da extensão especificada
         $files = glob(rtrim($fullFolder, '/') . '/*.' . $extension);
         sort($files, SORT_NATURAL);
 
-        // Cria um mapa de arquivos por nome base
-        $filesByName = [];
         foreach ($files as $filePath) {
             if (!is_file($filePath) || !is_readable($filePath)) continue;
 
-            $fileName = basename($filePath); // ex: main.prod.1.css
-
-            // Extrai o nome base (primeira parte antes do primeiro ponto)
-            $baseName = explode('.', $fileName)[0]; // ex: main
-
-            // Armazena apenas o primeiro arquivo de cada nome base
-            if (in_array($baseName, $selectedNames) && !isset($filesByName[$baseName])) {
-                $filesByName[$baseName] = $filePath;
-                $result[] = $filePath;
+            foreach ($selectedNames as $selected) {
+                if (str_contains(strtolower($filePath), strtolower($selected))) {
+                    $result[] = $filePath;
+                    break;
+                }
             }
         }
 
@@ -301,7 +295,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
             // Converte em PDF usando Dompdf
             $options = new Options();
             $options->set('isRemoteEnabled', true);
-            $options->set('chroot', $_SERVER['DOCUMENT_ROOT']);
+            $options->set('chroot', $app->view->getThemeFolder() . "/assets");
 
             $pdf = new Dompdf($options);
             $pdf->loadHtml($html);
