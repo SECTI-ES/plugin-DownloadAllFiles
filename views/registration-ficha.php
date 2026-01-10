@@ -136,6 +136,11 @@ date_default_timezone_set('America/Sao_Paulo');
                 border-left: 3px solid var(--mc-black);
             }
 
+            .table-phases-body tr:first-child td,
+            .table-phases-body tr:first-child th {
+                border-top: 3px solid var(--mc-black);
+            }
+
             td, th {
                vertical-align: middle;
             }
@@ -296,7 +301,12 @@ date_default_timezone_set('America/Sao_Paulo');
                 display: table-row-group;
                 page-break-inside: avoid;
                 page-break-after: auto;
-                border-bottom: 2px solid var(--mc-black);
+            }
+
+            @page {
+                margin: 0;
+                padding: 0;
+                border: none;
             }
         </style>
     </head>
