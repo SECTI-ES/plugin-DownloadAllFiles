@@ -23,6 +23,9 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
      */
     public function GET_createAllZipFiles()
     {
+        set_time_limit(0);
+        ignore_user_abort(true);
+
         $app = App::i();
         $this->requireAuthentication();
 
@@ -59,7 +62,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
             $registrations = $phase->getAllRegistrations();
 
             foreach ($registrations as $registration) {
-                if (!key_exists("status", $registration) || $this->statusName($registration->status) === i::__("Rascunho")) continue; // Removendo inscrições em rascunho
+                if ($this->statusName($registration->status ?? "") === i::__("Rascunho")) continue; // Removendo inscrições em rascunho
 
                 if (!isset($fields[$registration->number])) // Usa-se o Number e não Id pois o Id muda conforme a fase
                     $fields[$registration->number] = [];
@@ -92,11 +95,17 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         $basePath = sys_get_temp_dir() . '/export_' . uniqid();
         mkdir($basePath, 0777, true);
 
+        ob_start();
+        include __DIR__ . '/views/registration-ficha/css.php';
+        $baseHtml = $this->resolveCssVariables(ob_get_clean());
+
         //Gera as fichas de inscrição em PDF
         $registrations = $app->repo('Registration')->findBy(['opportunity' => $opportunity]) ?? [];
         foreach ($registrations as $registration) {
+            if (!isset($fields[$registration->number])) continue; // Inscrição em rascunho
+
             $fileName = $basePath . '/' . $registration->number . '.pdf';
-            $this->exportRegistrationToPdf($registration, $fields[$registration->number], $fileName);
+            $this->exportRegistrationToPdf($registration, $fields[$registration->number], $fileName, $baseHtml);
             $pathInZip = $registration->number . '/' . $registration->number . '.pdf';
             $zip->addFile($fileName, $pathInZip);
         }
@@ -276,22 +285,20 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
     /**
      * Gera o PDF da ficha de inscrição e salva em $folder/ficha.pdf
      */
-    private function exportRegistrationToPdf($registration, $answers, $fileName)
+    private function exportRegistrationToPdf($registration, $answers, $fileName, $baseHtml)
     {
         $app = App::i();
         // Variáveis para acessar no template
         $nameOwner = $registration->owner->name;
         $singleUrlOwner = $registration->owner->singleUrl;
 
-        // Gera HTML com template da ficha
-        ob_start();
-        include __DIR__ . '/views/registration-ficha.php';
-        $html = ob_get_clean();
-
-
         // Gera PDF
         try {
-            $html = $this->resolveCssVariables($html);
+            // Gera HTML com template da ficha
+            ob_start();
+            include __DIR__ . '/views/registration-ficha/registration-ficha.php';
+            $html = $baseHtml . ob_get_clean();
+
             // error_log("HTML gerado para PDF: \n" . $html);
             // echo $html;
             // exit;
@@ -307,6 +314,9 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
             $pdf->render();
 
             file_put_contents($fileName, $pdf->output());
+
+            unset($pdf);
+            gc_collect_cycles();
         } catch (\Exception $e) {
             error_log("Erro ao gerar PDF: " . $e->getMessage());
             $this->errorJson("Erro ao gerar PDF: " . $e->getMessage(), 500);
