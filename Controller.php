@@ -59,6 +59,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
             $registrations = $phase->getAllRegistrations();
 
             foreach ($registrations as $registration) {
+                if (!key_exists("status", $registration) || $this->statusName($registration->status) === i::__("Rascunho")) continue; // Removendo inscrições em rascunho
 
                 if (!isset($fields[$registration->number])) // Usa-se o Number e não Id pois o Id muda conforme a fase
                     $fields[$registration->number] = [];
@@ -67,7 +68,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
                     $fields[$registration->number][$phase->id] = [];
 
                 $fields[$registration->number][$phase->id]["name"] = $phase->name;
-                $fields[$registration->number][$phase->id]["status"] = $registration->status ?? i::__("Rascunho");
+                $fields[$registration->number][$phase->id]["status"] = $registration->status ?? i::__("Nulo");
                 $fields[$registration->number][$phase->id]["answers"] = $this->getAnswers($registration);
 
                 if (!$registration->files) continue;
@@ -77,7 +78,9 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
                     if (!$file || !file_exists($file->path)) continue;
 
                     $parts = explode(' - ', $file->path, 3);
-                    $fileName = count($parts) >= 3 ? $parts[2] : $file->path;
+                    if (count($parts) < 3) continue; // Formato inválido - Removendo .zip com todos os arquivos do inscrito
+
+                    $fileName = $parts[2];
 
                     $pathInZip = $registration->number . '/'. i::__("anexos") . '-' . preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $phase->name) . '/' . $fileName;
                     $zip->addFile($file->path, $pathInZip);
