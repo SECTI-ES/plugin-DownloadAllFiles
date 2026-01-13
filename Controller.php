@@ -23,7 +23,6 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
      */
     public function GET_createAllZipFiles()
     {
-        set_time_limit(0);
         ignore_user_abort(true);
 
         $app = App::i();
