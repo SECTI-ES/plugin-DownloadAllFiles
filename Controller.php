@@ -6,7 +6,6 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use MapasCulturais\i;
 use MapasCulturais\App;
-use Exception;
 
 class Controller extends \MapasCulturais\Controllers\EntityController {
 
@@ -56,22 +55,26 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
 
         // Copia os anexos e acumula as respostas
         $fields = [];
+        $full_registrations = [];
         $phase = $opportunity;
         while(!!$phase) {
             $registrations = $phase->getAllRegistrations();
 
             foreach ($registrations as $registration) {
-                if ($this->statusName($registration->status ?? "") === i::__("Rascunho")) continue; // Removendo inscrições em rascunho
+                if (($registration->status ?? 0) == 0) continue; // Removendo inscrições em rascunho
 
-                if (!isset($fields[$registration->number])) // Usa-se o Number e não Id pois o Id muda conforme a fase
+                if ($phase->isFirstPhase && !isset($fields[$registration->number])){ // Usa-se o Number e não Id pois o Id muda conforme a fase
                     $fields[$registration->number] = [];
+                    $full_registrations[$registration->number] = $registration;
+                }
 
-                if (!isset($fields[$registration->number][$phase->id]))
-                    $fields[$registration->number][$phase->id] = [];
-
-                $fields[$registration->number][$phase->id]["name"] = $phase->name;
-                $fields[$registration->number][$phase->id]["status"] = $registration->status ?? i::__("Nulo");
-                $fields[$registration->number][$phase->id]["answers"] = $this->getAnswers($registration);
+                if (isset($fields[$registration->number]))
+                    $fields[$registration->number][$phase->id] = [
+                        "name" => $phase->name,
+                        "status" => ["id" => $registration->status ?? -1, "label" => $phase->statusLabels[$registration->status] ?? i::__("Nulo")],
+                        "answers" => $this->getAnswers($registration)
+                ];
+                else continue;
 
                 if (!$registration->files) continue;
 
@@ -99,13 +102,10 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         $baseHtml = $this->resolveCssVariables(ob_get_clean());
 
         //Gera as fichas de inscrição em PDF
-        $registrations = $app->repo('Registration')->findBy(['opportunity' => $opportunity]) ?? [];
-        foreach ($registrations as $registration) {
-            if (!isset($fields[$registration->number])) continue; // Inscrição em rascunho
-
-            $fileName = $basePath . '/' . $registration->number . '.pdf';
-            $this->exportRegistrationToPdf($registration, $fields[$registration->number], $fileName, $baseHtml);
-            $pathInZip = $registration->number . '/' . $registration->number . '.pdf';
+        foreach ($full_registrations as $number => $registration) {
+            $fileName = $basePath . '/' . $number . '.pdf';
+            $this->exportRegistrationToPdf($registration, $fields[$number], $fileName, $baseHtml);
+            $pathInZip = $number . '/' . $number . '.pdf';
             $zip->addFile($fileName, $pathInZip);
         }
 
@@ -113,7 +113,8 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
 
         if (!file_exists($tmpZipPath)) {
             @unlink($tmpZipPath);
-            $this->errorJson(i::__("Nenhum anexo encontrado"), 500);
+            $this->deleteFolder($basePath);
+            $this->errorJson(i::__("Nenhuma inscrição finalizada encontrada ou erro ao criar o ZIP"), 500);
         }
 
         // Cabeçalhos para forçar download
@@ -261,24 +262,6 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         }
 
         return $result;
-    }
-
-    function statusName($status, $css=false) {
-        if($status === 10) {
-            return i::__('Selecionada');
-        } elseif($status === 8) {
-            return i::__('Suplente');
-        } elseif($status === 3) {
-            if($css) return i::__('Nao-Selecionada');
-            return i::__('Não selecionada');
-        } elseif($status === 2) {
-            if($css) return i::__('Invalida');
-            return i::__('Inválida');
-        } elseif($status === 1) {
-            return i::__('Pendente');
-        } else {
-            return i::__('Rascunho');
-        }
     }
 
     /**

@@ -91,8 +91,8 @@ date_default_timezone_set('America/Sao_Paulo');
                                         <td align="right">
                                             <div class="status-box">
                                                 Status:
-                                                <span class="status status-<?= isset($form['status']) ? $this->statusName($form['status'], true) : 'Rascunho' ?>">
-                                                    <?= isset($form['status']) ? $this->statusName($form['status']) : 'Rascunho' ?>
+                                                <span class="status status-<?= isset($form['status']) ? $form['status']['id'] : '-1' ?>">
+                                                    <?= isset($form['status']) ? $form['status']['label'] : 'Nulo' ?>
                                                 </span>
                                             </div>
                                         </td>

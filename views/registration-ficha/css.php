@@ -228,33 +228,32 @@ date_default_timezone_set('America/Sao_Paulo');
                 font-size: 12px;
                 border-radius: 8px;
             }
-
-            .status-Selecionada {
+            .status-10 {  /* Selecionado */
                 background: var(--mc-success-500);
                 color: var(--mc-white);
             }
 
-            .status-Pendente {
+            .status-1 {  /* Pendente */
                 background: var(--mc-gray-700);
                 color: var(--mc-white);
             }
 
-            .status-Suplente {
+            .status-8 {  /* Suplente */
                 background: var(--mc-warning-500);
-                color: var(--mc-gray-700);
+                color: var(--mc-black);
             }
 
-            .status-Nao-Selecionada {
+            .status-3 {  /* Não Selecionada */
                 background: var(--mc-danger-500);
                 color: var(--mc-white);
             }
 
-            .status-Invalida {
-                background: var(--mc-danger-500);
+            .status-2, .status--1 {  /* Inválida ou Nulo - purple */
+                background: purple;
                 color: var(--mc-white);
             }
 
-            .status-Rascunho {
+            .status-0 {  /* Rascunho */
                 background: var(--mc-gray-500);
                 color: var(--mc-white);
             }
