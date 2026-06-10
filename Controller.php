@@ -136,7 +136,7 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         $app = App::i();
         $app->disableAccessControl();
 
-        json_encode($registration); // POR FAVOR nao remover essa lina. Ela faz com que o objeto seja completamente carregado e seja possível acessar os metadados. Só altere caso saiba fazer o carregamento corretamente.
+        json_encode($registration); // POR FAVOR nao remover essa linha. Ela faz com que o objeto seja completamente carregado e seja possível acessar os metadados. Só altere caso saiba fazer o carregamento corretamente. (Não sei pq precisa disso, mas funciona).
 
         // Recupera campos da ficha usando getMetadata()
         $fieldsValues = method_exists($registration, 'getMetadata') ? $registration->getMetadata() : (isset($registration->metadata) ? $registration->metadata : []) ;
@@ -146,15 +146,27 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
         $fields = [];
         foreach ($fieldsConfigurations as $conf) {
             $key = 'field_' . $conf->id;
-            $label = $conf->title ?? $conf->fieldName ?? $key;
+            $name = $conf->title ?? $conf->fieldName ?? $key;
 
-            $fields[$label] = isset($fieldsValues[$key]) && $fieldsValues[$key] ? $fieldsValues[$key] : (isset($registration->$key) && $registration->$key ? $registration->$key : ''); // Se retornar '' é pq nao tem o campo respondido
+            $stepId = $conf->step->id;
+
+            if(!isset($fields[$stepId]))
+                $fields[$stepId] = [
+                    'name' => $conf->step->name,
+                    'fields' => []
+                ];
+
+            $fields[$stepId]['fields'][$key] = [
+                'name' => $name,
+                'value' => $fieldsValues[$key] ?? $registration->$key ?? '' // Se retornar '' é pq nao tem o campo respondido
+            ];
         }
 
         foreach ($filesConfigurations as $conf) {
             $key = 'rfc_' . $conf->id;
-            $label = $conf->title ?? $conf->groupName ?? $key;
+            $name = $conf->title ?? $conf->groupName ?? $key;
             $path = "";
+            $stepId = $conf->step->id;
 
             if (isset($registration->files[$key])){
                 $parts = explode(' - ', $registration->files[$key]->path, 3);
@@ -162,7 +174,17 @@ class Controller extends \MapasCulturais\Controllers\EntityController {
 
                 $path = '/anexos-' . preg_replace('/[^a-zA-Z0-9_\-.]/', '_', $registration->opportunity->name) . '/' . $fileName;
             }
-            $fields[$label] = $path;
+
+            if(!isset($fields[$stepId]))
+                $fields[$stepId] = [
+                    'name' => $conf->step->name,
+                    'fields' => []
+                ];
+
+            $fields[$stepId]['fields'][$key] = [
+                'name' => $name,
+                'value' => $path
+            ];
         }
         $app->enableAccessControl();
 

@@ -79,46 +79,48 @@ date_default_timezone_set('America/Sao_Paulo');
 
             <div class="section">
                 <div class="header"><h2><?= i::__("Respostas dos Formulários por Fase") ?></h2></div>
-                <?php foreach ($answers as $formId => $form): ?>
-                    <?php if (isset($form['answers']) && !empty($form['answers'])): ?>
+                <?php foreach ($answers as $phaseId => $phase): ?>
+                    <?php if (isset($phase['answers']) && !empty($phase['answers'])): ?>
                         <div class="table-phases">
-                            <div class="table-phases-header">
-                                <table width="100%">
-                                    <tr>
-                                        <td align="left" style="padding-top: 3px;">
-                                            <?= htmlspecialchars($form['name'] ?? ($formId ?? "")) ?>
-                                        </td>
-                                        <td align="right">
-                                            <div class="status-box">
-                                                Status:
-                                                <span class="status status-<?= isset($form['status']) ? $form['status']['id'] : '-1' ?>">
-                                                    <?= isset($form['status']) ? $form['status']['label'] : 'Nulo' ?>
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
+                            <table class="table-phases-header page-break-avoid">
+                                <tr>
+                                    <th align="left">
+                                        <?= htmlspecialchars($phase['name'] ?? ($phaseId ?? "")) ?>
+                                    </th>
+                                    <th align="right">
+                                        <div class="status-box">
+                                            Status:
+                                            <span class="status status-<?= isset($phase['status']) ? $phase['status']['id'] : '-1' ?>">
+                                                <?= isset($phase['status']) ? $phase['status']['label'] : 'Nulo' ?>
+                                            </span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </table>
+                                <?php foreach ($phase['answers'] as $stepId => $step): ?>
+                                    <div class="step-title">
+                                        <?= htmlspecialchars($step['name']) ?>
+                                    </div>
+                                    <div class="table-border">
+                                        <table class="table">
+                                            <thead class="table-step-header page-break-avoid">
+                                                <tr>
+                                                    <th><?= i::__("Campo") ?></th>
+                                                    <th><?= i::__("Resposta") ?></th>
+                                                </tr>
+                                            </thead>
 
-                            <div class="table-border">
-                                <table class="table table-phases-body">
-                                    <thead>
-                                        <tr class="table-header">
-                                            <th><?= i::__("Campo") ?></th>
-                                            <th><?= i::__("Resposta") ?></th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        <?php foreach ($form['answers'] as $key => $value): ?>
-                                            <tr>
-                                                <td class="field"><?= htmlspecialchars($key) ?></td>
-                                                <td><?= htmlspecialchars(is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)) ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                            <tbody class="table-step-body">
+                                                <?php foreach ($step['fields'] as $fieldId => $field): ?>
+                                                    <tr class="page-break-avoid">
+                                                        <td class="field"><?= htmlspecialchars($field['name']) ?></td>
+                                                        <td><?= htmlspecialchars(is_scalar($field['value']) ? $field['value'] : json_encode($field['value'], JSON_UNESCAPED_UNICODE)) ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
                 <?php endforeach; ?>

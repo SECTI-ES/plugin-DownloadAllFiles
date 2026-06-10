@@ -108,13 +108,8 @@ date_default_timezone_set('America/Sao_Paulo');
                 border-radius: 25px;
                 z-index: 2;
             }
-            .register-table, .table-phases-body {
+            .table {
                 border-collapse: collapse;
-                width: 100%;
-            }
-
-            .table-phases-body {
-                table-layout: fixed;
                 width: 100%;
             }
 
@@ -134,11 +129,6 @@ date_default_timezone_set('America/Sao_Paulo');
             .table td + td,
             .table th + td {
                 border-left: 3px solid var(--mc-black);
-            }
-
-            .table-phases-body tr:first-child td,
-            .table-phases-body tr:first-child th {
-                border-top: 3px solid var(--mc-black);
             }
 
             td, th {
@@ -169,23 +159,18 @@ date_default_timezone_set('America/Sao_Paulo');
 
             .table-phases {
                 width: 100%;
-                overflow: hidden;
-                padding-top: 15px;
+                padding: 15px;
                 margin-bottom: 20px;
+                background-color: var(--mc-black);
+                border-radius: 26px;
             }
 
             .table-phases-header {
-                background-color: var(--mc-black);
                 color: var(--mc-white);
                 font-size: 20px;
                 font-weight: bold;
-                padding: 2% 5% 0 7%;
-                height: 80px;
-
-                z-index: -2;
-                border-top-left-radius: 26px;
-                border-top-right-radius: 26px;
-                margin-bottom: -28px;
+                padding: 0 5% 0 5%;
+                height: 40px;
             }
 
             .status-box{
@@ -194,33 +179,36 @@ date_default_timezone_set('America/Sao_Paulo');
                 padding-top: 4px;
             }
 
-            .table-phases-body th {
-                background-color: var(--mc-secondary-500);
+            .step-title {
+                background-color: var(--mc-primary-500);
+                text-align: center;
+                width: 181px;
+                padding: 3px;
+                border: 3px solid var(--mc-black);
+                border-radius: 20px;
+                margin-top: 10px;
+                margin-bottom: -43px;
+                height: 70px;
+            }
+            .table-step-header th {
+                background: var(--mc-secondary-500);
                 color: var(--mc-white);
-                font-size: 16px;
-                padding: 11px;
+                font-weight: bold;
+                border-bottom: 3px solid var(--mc-black);
+                padding: 10px;
             }
 
-            .table-phases-body td {
-                font-size: 14px;
-                background-color: var(--mc-white);
+            .table-step-body {
+                background: var(--mc-white);
                 color: var(--mc-black);
-                padding: 13px;
+            }
 
+            .table-step-body td {
                 word-wrap: break-word;
                 overflow-wrap: break-word;
                 word-break: break-word;
                 white-space: normal;
-            }
-
-            .table-phases-body th:first-child,
-            .table-phases-body td.field {
-                width: 30%;
-            }
-
-            .table-phases-body th:last-child,
-            .table-phases-body td:last-child {
-                width: 70%;
+                padding: 8px;
             }
 
             .status {
@@ -279,7 +267,7 @@ date_default_timezone_set('America/Sao_Paulo');
             /* ===== CONTROLE DE QUEBRA DE PÁGINA (PDF) ===== */
 
             /* Cabeçalho da fase nunca fica separado */
-            .table-phases-header {
+            .page-break-avoid {
                 page-break-inside: avoid;
                 page-break-after: avoid;
             }
@@ -290,16 +278,8 @@ date_default_timezone_set('America/Sao_Paulo');
                 width: 100%;
             }
 
-            /* Linhas nunca quebram no meio */
-            tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
-
             thead {
                 display: table-row-group;
-                page-break-inside: avoid;
-                page-break-after: auto;
             }
 
             @page {
