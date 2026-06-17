@@ -97,7 +97,8 @@ date_default_timezone_set('America/Sao_Paulo');
                                     </th>
                                 </tr>
                             </table>
-                                <?php foreach ($phase['answers'] as $stepId => $step): ?>
+                            <?php foreach ($phase['answers'] as $stepId => $step): ?>
+                                <div class="step">
                                     <div class="step-title">
                                         <?= htmlspecialchars($step['name']) ?>
                                     </div>
@@ -120,7 +121,8 @@ date_default_timezone_set('America/Sao_Paulo');
                                             </tbody>
                                         </table>
                                     </div>
-                                <?php endforeach; ?>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
                 <?php endforeach; ?>

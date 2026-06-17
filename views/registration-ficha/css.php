@@ -74,7 +74,7 @@ date_default_timezone_set('America/Sao_Paulo');
             }
 
             .header h2 {
-                margin: 10px 0 10px 0;
+                margin: 10px 0 15px 0;
                 font-size: 22px;
                 font-weight: normal;
                 opacity: 0.95;
@@ -82,7 +82,7 @@ date_default_timezone_set('America/Sao_Paulo');
 
             .register, .section {
                 width: 100%;
-                padding-bottom: 25px;
+                padding-bottom: 15px;
             }
 
             .register-header {
@@ -179,15 +179,20 @@ date_default_timezone_set('America/Sao_Paulo');
                 padding-top: 4px;
             }
 
+            .step {
+                page-break-inside: avoid;
+                margin-bottom: 5px;
+            }
+
             .step-title {
                 background-color: var(--mc-primary-500);
                 text-align: center;
                 width: 181px;
-                padding: 3px;
+                padding: 5px 3px 3px 3px;
                 border: 3px solid var(--mc-black);
                 border-radius: 20px;
-                margin-top: 10px;
-                margin-bottom: -43px;
+                margin-top: 5px;
+                margin-bottom: -42px;
                 height: 70px;
             }
             .table-step-header th {
